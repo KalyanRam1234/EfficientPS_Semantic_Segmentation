@@ -188,7 +188,7 @@ The authors have used utility functions from other open-source projects. We espe
 ### Our Team
 
 * [Haveli UAVs](https://www.haveliuavs.com/)
-* [Vishwanath G](https://sites.google.com/view/viswanathiiitb/home)
+* [Viswanath G](https://sites.google.com/view/viswanathiiitb/home)
 * [Siddharth Chauhan](https://github.com/SiddharthChauhan303)
 * [Munagala Kalyan Ram](https://github.com/KalyanRam1234)
 * [Prateeth Rao](https://github.com/Prateeth8)
