@@ -41,7 +41,7 @@ The author's code didn't have support for CUDA 11.2 hence, we had to remove lega
 The library that caused the deprecation error is **#include<THC/thc.h>** and other .h files that come under the THC library. We replaced this library with **#include<Aten/Aten.h>** and torch library. This library has the updated functions that were present in the deprecated version, so we replaced the deprecated functions with the newer functions. This allowed us to run the model on our system requirements and available infrastructure.
 
 ## Installation
-a. Create a conda virtual environment from the provided environment.yml and activate it.
+a. Create a conda virtual environment from the modified env.yml file and activate it.
 ```shell
 git clone https://github.com/KalyanRam1234/EfficientPS_Semantic_Segmentation.git
 cd EfficientPS
@@ -98,13 +98,30 @@ python createPanopticImgs.py --dataset-folder path_to_cityscapes_gtFine_folder -
 
 ### Running On Custom Datasets
 
-To run on different datasets, we present a set of instructions to format the dataset to the directory structure specified above and fit the dataloader.
+To run on different datasets, we present a set of instructions to format the dataset to the directory structure, makes masks,etc specified above and fit the dataloader.
 
+All the codes for this section are in the tools directory
 
+1. Make a copy of the [labels.py](/tools/labels.py). Here specify all the classes that are present in the dataset along with its color.
+
+2. Make a copy of the [convert_freiburg.py](/tools/convert_freiburg.py) file. Then import the labels file created in step 1 and use appropriate names for the output files.
+
+3. Ensure that the folder with the raw data is formated as training/images and training/annotations, similarly for validation . Then run the command below.
+```
+python tools/<Name of convert file> ROOT_DIRECTORY_OF_DATASET OUTPUT_DIRECTORY
+```
+
+4. Now the data is formatted as shown in the diagram. We now need to create the DataLoader, to do so copy the [finnforest.py](/mmdet/datasets/finnforest.py) file and here add all the classes that are present in your dataset to the **CLASSES** variable.
+
+5. Import and add this dataloader file to the [__init__.py](/mmdet/datasets/__init__.py) file. We then go to the [config](/configs/efficientPS_singlegpu_sample.py) file present in the configs folder and replace the values of the appropriate fields with the data path and the dataloader to be used.
+
+6. Set the required configurations in the config file, i.e the hyperparameters, etc.
 
 ## Training and Evaluation
 ### Training Procedure
-Edit the config file appropriately in configs folder.
+
+Ensure the metrics is set to segm. The config file we used makes use of the efficientNet_b5 backbone and a 2-way-FPN. Following which only the semantic head is present where the number of classes, etc needs to be adjusted based on dataset. We used this configuration to take advantage of the pretrained cityscapes weights where we did a simple network surgery to remove the panoptic layer states while loading the model.
+
 Train with a single GPU:
 ```
 python tools/train.py efficientPS_singlegpu_sample.py --work_dir work_dirs/checkpoints --validate 
@@ -114,32 +131,50 @@ Train with multiple GPUS:
 ./tools/dist_train.sh efficientPS_multigpu_sample.py ${GPU_NUM} --work_dir work_dirs/checkpoints --validate 
 ```
 * --resume_from ${CHECKPOINT_FILE}: Resume from a previous checkpoint file.
+
 ### Evaluation Procedure
+
+We have added code to calculate the IoU and DiceLoss scores during training and evaluation. They are the standard metrics used to evaluate the performance of a semantic segmentation model.
+
 Test with a single GPU:
 ```
-python tools/test.py efficientPS_singlegpu_sample.py ${CHECKPOINT_FILE} --eval panoptic
+python tools/test.py efficientPS_singlegpu_sample.py ${CHECKPOINT_FILE} --eval segm
 ```
 Test with multiple GPUS:
 ```
-./tools/dist_test.sh efficientPS_multigpu_sample.py ${CHECKPOINT_FILE} ${GPU_NUM} --eval panoptic
+./tools/dist_test.sh efficientPS_multigpu_sample.py ${CHECKPOINT_FILE} ${GPU_NUM} --eval segm
 ```
 
 ## Pre-Trained Models
+
+### Models By Authors
+
 | Dataset   |  Model | PQ |
 |-----------|:-----------------:|--------------|
 | Cityscapes| [Download](https://www.dropbox.com/s/zihqct9zum8eq66/efficientPS_cityscapes.zip?dl=0) | 64.4 |
 |    KITTI  | [Download](https://www.dropbox.com/s/4z3qiaew8qq7y8n/efficientPS_kitti.zip?dl=0) | 42.5| 
 
+### Our Models
+
+| Dataset | Model |
+| ------- |-------|
 
 ## WorkFlow
 
 Checkout this readme for more details on our work : [WorkFlow](/workflow.md) 
 
 ## Additional Notes:
+
+To make predictions on the semantic segmentation model, we have modified the cityscapes_save_predictions file to get the semantic mask.
+
    * tool/cityscapes_inference.py: saves predictions in the official cityscapes panoptic format.
    * tool/cityscapes_save_predictions.py: saves color visualizations.
-   * We only provide the single scale evaluation script. Multi-Scale+Flip evaluation further imporves the performance of the model.
-   * This is a re-implementation of EfficientPS in PyTorch. The performance of the trained models might slightly differ from the metrics reported in the paper. Please refer to the metrics reported in [EfficientPS: Efficient Panoptic Segmentation](https://arxiv.org/abs/2004.02307) when making comparisons.
+
+Example: 
+```
+python tools/cityscapes_save_predictions.py CONFIGS_PATH PTH_MODEL_PATH INPUT_DATA_DIRECTORY OUTPUT_DIRECTORY
+```
+Note that input directory should have the images in a subdirectories.
 
 ## Acknowledgements
 The authors have used utility functions from other open-source projects. We especially thank the authors of:
