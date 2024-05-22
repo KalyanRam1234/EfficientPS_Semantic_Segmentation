@@ -158,6 +158,9 @@ Test with multiple GPUS:
 
 | Dataset | Model |
 | ------- |-------|
+| FinnWoodLands | [Download](https://drive.google.com/drive/folders/1JfdkxjlENyXq23EnrgEkkmwLQu_7WCcE?usp=sharing) |
+| Freiburg | [Download](https://drive.google.com/drive/folders/1G0kNokxNi20B-Nhak3EI-_qbgnV6pM-Z?usp=sharing) |
+
 
 ## WorkFlow
 
